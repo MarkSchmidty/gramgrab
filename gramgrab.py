@@ -9,10 +9,10 @@ parser = argparse.ArgumentParser(description='Download zip files from a public T
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
                                  epilog='''\
 Example usage:
-  python download_telegram_zips.py -i <API_ID> -a <API_HASH> -c <CHANNEL_URL> -d <CONCURRENT_DOWNLOADS>
+  python gramgrab.py -i <API_ID> -a <API_HASH> -c <CHANNEL_URL> -d <CONCURRENT_DOWNLOADS>
 
 Example:
-  python download_telegram_zips.py -i 123456 -a abcd1234abcd1234abcd1234abcd1234 -c https://t.me/public_channel_url -d 5
+  python gramgrab.py -i 123456 -a abcd1234abcd1234abcd1234abcd1234 -c https://t.me/public_channel_url -d 5
 ''')
 
 parser.add_argument('-i', '--api_id', required=True, help='Your API ID')
