@@ -2,9 +2,9 @@ import os
 import argparse
 import asyncio
 from telethon import TelegramClient
-from telethon.errors.rpcerrorlist import FileReferenceExpiredError
 from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.types import MessageMediaDocument
+from telethon.errors.rpcerrorlist import FileReferenceExpiredError
 
 parser = argparse.ArgumentParser(description='Download zip files from a public Telegram channel concurrently.',
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -28,24 +28,36 @@ api_hash = args.api_hash
 channel_url = args.channel_url
 concurrent_downloads = args.concurrent_downloads
 
-async def download_zip_file(client, message):
+async def download_zip_file(client, message, max_retries=3):
     file_name = message.media.document.attributes[0].file_name
     file_path = os.path.join(os.getcwd(), file_name)
-    print(f'Downloading {file_name}...')
-    max_retries = 3
-    for i in range(max_retries):
+
+    # Check if the file already exists and skip if it does
+    if os.path.exists(file_path):
+        print(f'{file_name} already exists. Skipping...')
+        return
+
+    retries = 0
+    while retries < max_retries:
         try:
+            print(f'Downloading {file_name}...')
             await client.download_media(message, file_path)
             print(f'{file_name} downloaded.')
             break
-        except FileReferenceExpiredError:
-            print(f'Error downloading {file_name}. File reference expired. Retrying...')
-            continue
-        except Exception as e:
-            print(f'Error downloading {file_name}: {str(e)}. Retrying...')
-            continue
+        except FileReferenceExpiredError as e:
+            retries += 1
+            print(f'Error downloading {file_name}: {e}. Retrying {retries}/{max_retries}...')
+            
+            # Obtain a fresh file reference
+            try:
+                message = await client.get_messages(message.to_id, ids=message.id)
+            except Exception as ex:
+                print(f'Error obtaining a fresh file reference for {file_name}: {ex}. Skipping...')
+                break
+
+            await asyncio.sleep(1)  # Wait for a short period before retrying
     else:
-        print(f'Skipping {file_name}. Failed to download after {max_retries} retries.')
+        print(f'Failed to download {file_name} after {max_retries} retries. Skipping...')
 
 async def download_zip_files(client, channel_url):
     channel = await client.get_entity(channel_url)
