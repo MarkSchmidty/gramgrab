@@ -1,7 +1,6 @@
 import os
 import argparse
 import asyncio
-import ast
 from telethon import TelegramClient
 from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.types import MessageMediaDocument
@@ -30,12 +29,11 @@ concurrent_downloads = args.concurrent_downloads
 
 async def download_zip_file(client, message):
     file_name = message.media.document.attributes[0].file_name
-    file_name_utf8 = ast.literal_eval(f'"{file_name}"')
+    file_name_utf8 = bytes(file_name, 'ascii').decode('unicode_escape')
     file_path = os.path.join(os.getcwd(), file_name_utf8)
     print(f'Downloading {file_name_utf8}...')
     await client.download_media(message, file_path)
     print(f'{file_name_utf8} downloaded.')
-
 
 async def download_zip_files(client, channel_url):
     channel = await client.get_entity(channel_url)
