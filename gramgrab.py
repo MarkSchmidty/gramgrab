@@ -29,10 +29,11 @@ concurrent_downloads = args.concurrent_downloads
 
 async def download_zip_file(client, message):
     file_name = message.media.document.attributes[0].file_name
-    file_path = os.path.join(os.getcwd(), file_name)
-    print(f'Downloading {file_name}...')
+    file_name_utf8 = file_name.encode('utf-8').decode('unicode_escape')
+    file_path = os.path.join(os.getcwd(), file_name_utf8)
+    print(f'Downloading {repr(file_name_utf8)}...')
     await client.download_media(message, file_path)
-    print(f'{file_name} downloaded.')
+    print(f'{repr(file_name_utf8)} downloaded.')
 
 async def download_zip_files(client, channel_url):
     channel = await client.get_entity(channel_url)
