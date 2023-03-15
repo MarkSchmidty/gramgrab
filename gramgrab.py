@@ -4,12 +4,35 @@ import asyncio
 from telethon import TelegramClient
 from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.types import MessageMediaDocument
-from telethon.errors.rpcerrorlist import FileReferenceExpiredError
 
-# ...
+parser = argparse.ArgumentParser(description='Download zip files from a public Telegram channel concurrently.',
+                                 formatter_class=argparse.RawDescriptionHelpFormatter,
+                                 epilog='''\
+Example usage:
+  python gramgrab.py -i <API_ID> -a <API_HASH> -c <CHANNEL_URL> -d <CONCURRENT_DOWNLOADS>
 
-async def download_zip_file(client, message, max_retries=3):
-    # ...
+Example:
+  python gramgrab.py -i 123456 -a abcd1234abcd1234abcd1234abcd1234 -c https://t.me/public_channel_url -d 5
+''')
+
+parser.add_argument('-i', '--api_id', required=True, help='Your API ID')
+parser.add_argument('-a', '--api_hash', required=True, help='Your API Hash')
+parser.add_argument('-c', '--channel_url', required=True, help='Public Telegram channel URL')
+parser.add_argument('-d', '--concurrent_downloads', type=int, default=5, help='Number of concurrent downloads (default: 5)')
+
+args = parser.parse_args()
+
+api_id = args.api_id
+api_hash = args.api_hash
+channel_url = args.channel_url
+concurrent_downloads = args.concurrent_downloads
+
+async def download_zip_file(client, message):
+    file_name = message.media.document.attributes[0].file_name
+    file_path = os.path.join(os.getcwd(), file_name)
+    print(f'Downloading {file_name}...')
+    await client.download_media(message, file_path)
+    print(f'{file_name} downloaded.')
 
 async def download_zip_files(client, channel_url):
     channel = await client.get_entity(channel_url)
