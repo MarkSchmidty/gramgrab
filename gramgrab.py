@@ -2,6 +2,7 @@ import os
 import argparse
 import asyncio
 from telethon import TelegramClient
+from telethon.errors.rpcerrorlist import FileReferenceExpiredError
 from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.types import MessageMediaDocument
 
@@ -31,8 +32,20 @@ async def download_zip_file(client, message):
     file_name = message.media.document.attributes[0].file_name
     file_path = os.path.join(os.getcwd(), file_name)
     print(f'Downloading {file_name}...')
-    await client.download_media(message, file_path)
-    print(f'{file_name} downloaded.')
+    max_retries = 3
+    for i in range(max_retries):
+        try:
+            await client.download_media(message, file_path)
+            print(f'{file_name} downloaded.')
+            break
+        except FileReferenceExpiredError:
+            print(f'Error downloading {file_name}. File reference expired. Retrying...')
+            continue
+        except Exception as e:
+            print(f'Error downloading {file_name}: {str(e)}. Retrying...')
+            continue
+    else:
+        print(f'Skipping {file_name}. Failed to download after {max_retries} retries.')
 
 async def download_zip_files(client, channel_url):
     channel = await client.get_entity(channel_url)
