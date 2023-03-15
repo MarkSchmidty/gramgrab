@@ -32,6 +32,11 @@ async def download_zip_file(client, message, max_retries=3):
     file_name = message.media.document.attributes[0].file_name
     file_path = os.path.join(os.getcwd(), file_name)
 
+    # Check if the file already exists and skip if it does
+    if os.path.exists(file_path):
+        print(f'{file_name} already exists. Skipping...')
+        return
+
     retries = 0
     while retries < max_retries:
         try:
